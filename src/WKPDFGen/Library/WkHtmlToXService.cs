@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Options;
 using WKPDFGen.Library.Utils;
 
 namespace WKPDFGen.Library
@@ -49,11 +50,11 @@ namespace WKPDFGen.Library
     {
         private bool isLoaded;
 
-        public WkHtmlToXService()
+        public WkHtmlToXService(IOptions<WkPdfOptions> wkPdfOptions)
         {
             isLoaded = false;
             
-            LoadWkHtmlToXLibraryDll();
+            LoadWkHtmlToXLibraryDll(wkPdfOptions.Value);
         }
 
         public void Load()

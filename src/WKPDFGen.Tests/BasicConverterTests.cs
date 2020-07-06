@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using WKPDFGen.Converters;
 using WKPDFGen.Library;
@@ -24,12 +25,21 @@ namespace WKPDFGen.Tests
         [Test]
         public void Convert()
         {
-            var service = new WkHtmlToXService();
+            var pathToLibFolder = Helper.GetLibFolder();
+            
+            var option =  Options.Create(new WkPdfOptions
+            {
+                LinuxLibPath = Path.Combine(pathToLibFolder, "libwkhtmltox.so"),
+                WindowsLibPath = Path.Combine(pathToLibFolder, "libwkhtmltox.dll"),
+                OsxLibPath = Path.Combine(pathToLibFolder, "libwkhtmltox.dylib")
+            });
+            
+            var service = new WkHtmlToXService(option);
             var converter = new BasicConverter(service);
 
             var version = service.GetLibraryVersion();
             
-            Assert.AreEqual(WkHtmlToXService.LibVersion, version);
+            Assert.AreEqual("0.12.5", version);
 
             var bytes = converter.Convert(new PdfConfig
             {

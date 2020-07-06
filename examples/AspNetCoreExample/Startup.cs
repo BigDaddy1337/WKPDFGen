@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -13,9 +15,14 @@ namespace AspNetCoreExample
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddWkPdfGenerator();
+            services.AddWkPdfGenerator(options =>
+            {
+                options.LinuxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.5", "libwkhtmltox.so");
+                options.WindowsLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.5", "libwkhtmltox.dll");
+                options.OsxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.5", "libwkhtmltox.dylib");
+            });
 
-            services.AddHostedService<WorkerService>();
+            services.AddHostedService<ExampleBackgroundWorker>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

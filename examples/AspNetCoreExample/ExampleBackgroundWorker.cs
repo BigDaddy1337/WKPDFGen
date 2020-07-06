@@ -12,7 +12,7 @@ using WKPDFGen.Settings.Units;
 
 namespace AspNetCoreExample
 {
-    public class WorkerService: BackgroundService
+    public class ExampleBackgroundWorker: BackgroundService
     {
         private readonly ILogger logger;
         
@@ -35,7 +35,7 @@ namespace AspNetCoreExample
             }
         };
 
-        public WorkerService(IConverter basicConverter, ILogger<WorkerService> logger)
+        public ExampleBackgroundWorker(IConverter basicConverter, ILogger<ExampleBackgroundWorker> logger)
         {
             this.basicConverter = basicConverter;
             this.logger = logger;

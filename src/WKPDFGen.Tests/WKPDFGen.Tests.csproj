@@ -19,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\WKPDFGen.Infrastructure\WKPDFGen.Infrastructure.csproj" />
       <ProjectReference Include="..\WKPDFGen\WKPDFGen.csproj" />
     </ItemGroup>
 

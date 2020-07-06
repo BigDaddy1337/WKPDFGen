@@ -8,4 +8,10 @@
       <ProjectReference Include="..\..\src\WKPDFGen\WKPDFGen.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Update="0.12.5\*">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>

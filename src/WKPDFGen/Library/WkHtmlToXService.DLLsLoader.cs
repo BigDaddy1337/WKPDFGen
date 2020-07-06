@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Data;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
@@ -7,21 +7,18 @@ namespace WKPDFGen.Library
 {
     public partial class WkHtmlToXService: AssemblyLoadContext
     {
-        public static string LibVersion = "0.12.5";
-        
-        public void LoadWkHtmlToXLibraryDll()
+        public void LoadWkHtmlToXLibraryDll(WkPdfOptions options)
         {
-            var libPath = string.Empty;
-
-            var current = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
+            string libPath;
             
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                libPath = Path.Combine(current, LibVersion, "libwkhtmltox.dylib");
+                libPath = options.OsxLibPath ?? throw new NoNullAllowedException("OsxLibPath option is required for current OS");
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                libPath = Path.Combine(current, LibVersion,"libwkhtmltox.so");
+                libPath = options.LinuxLibPath ?? throw new NoNullAllowedException("LinuxLibPath option is required for current OS");
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                libPath = Path.Combine(current, LibVersion,"libwkhtmltox.dll");
-
+                libPath = options.WindowsLibPath ?? throw new NoNullAllowedException("WindowsLibPath option is required for current OS");
+            else throw new PlatformNotSupportedException();
+            
             LoadUnmanagedDllFromPath(libPath);
         }
     }
