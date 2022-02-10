@@ -1,13 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WKPDFGen;
 using WKPDFGen.Converters;
 using WKPDFGen.Settings;
-using WKPDFGen.Settings.Settings;
 using WKPDFGen.Settings.Units;
 
 namespace AspNetCoreExample
@@ -16,42 +15,40 @@ namespace AspNetCoreExample
     {
         private readonly ILogger logger;
         
-        private readonly IConverter basicConverter;
+        private readonly IWkHtmlToPdfConverter pdfConverter;
 
-        private readonly PdfConfig pdfConfig = new PdfConfig
+        private readonly PDFConfiguration pdfConfig = new(new PdfSettings(), new GlobalPdfSettings
         {
-            GlobalPdfSettings =
-            {
-                ColorMode = ColorMode.Color,
-                Orientation = Orientation.Portrait,
-                PaperSize = PaperKind.A4,
-            },
-            PdfSettings = new List<PdfSettings>
-            {
-                new PdfSettings
-                {
-                    HtmlContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In consectetur mauris eget ultrices iaculis.",
-                }
-            }
-        };
+            ColorMode = ColorMode.Color,
+            Orientation = Orientation.Portrait,
+            PaperSize = PaperKind.A4,
+        });
 
-        public ExampleBackgroundWorker(IConverter basicConverter, ILogger<ExampleBackgroundWorker> logger)
+        public ExampleBackgroundWorker(IWkHtmlToPdfConverter pdfConverter, ILogger<ExampleBackgroundWorker> logger)
         {
-            this.basicConverter = basicConverter;
+            this.pdfConverter = pdfConverter;
             this.logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (stoppingToken.IsCancellationRequested == false)
-            {
-                await Task.Delay(3000, stoppingToken);
+            var html = await File.ReadAllTextAsync("Simple.html", stoppingToken);
+            
+            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
+            var result1 = pdfConverter.Convert(html, pdfConfig);
+            await WriteToFileAsync("bytes", result1);
+            
+            var result2 = await pdfConverter.ConvertAsync(html, pdfConfig, stoppingToken);
+            await WriteToFileAsync("bytes-task", result2);
 
-                var result = basicConverter.Convert(pdfConfig);
+            var result3 = pdfConverter.ConvertAsStream(html, pdfConfig);
+            await WriteToFileAsync("stream", result3.ToArray());
+            
+            async Task WriteToFileAsync(string type, byte[] file)
+            {
+                await File.WriteAllBytesAsync($"example-{type}.pdf", file, stoppingToken);
                 
-                await File.WriteAllBytesAsync("example.pdf", result, stoppingToken);
-                
-                logger.LogInformation($"Creted PDF file with size {result.Length} at {DateTime.Now}");
+                logger.LogInformation("Created PDF file with size {Length} via {Type}", file.Length, type);
             }
         }
     }
