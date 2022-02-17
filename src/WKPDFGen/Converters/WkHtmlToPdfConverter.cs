@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -13,13 +14,14 @@ namespace WKPDFGen.Converters;
 
 public interface IWkHtmlToPdfConverter
 {
-    byte[] Convert(string html, IConfiguration configuration);
-    
-    Task<byte[]> ConvertAsync(string html, IConfiguration configuration, CancellationToken token = default);
-    
-    MemoryStream ConvertAsStream(string html, IConfiguration configuration);
+    Task<Stream> CreateAsync(string html, PDFConfiguration? configuration = null, CancellationToken token = default);
+
+    Task CreateOnDiskAsync(string html,
+                           string path,
+                           PDFConfiguration? configuration = null,
+                           CancellationToken token = default);
 }
-    
+
 public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
 {
     private readonly IWkHtmlWrapper wkHtmlWrapper;
@@ -30,102 +32,43 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
         this.wkHtmlWrapper = wkHtmlWrapper;
         this.logger = logger;
     }
-    
-    public byte[] Convert(string html, IConfiguration configuration)
+
+    public Task<Stream> CreateAsync(string html, PDFConfiguration? configuration = null, CancellationToken token = default)
     {
-        if (html is null || html.Length == 0) 
-            throw new ArgumentException("html content must be defined.");
-        
-        if (configuration is null) 
-            throw new ArgumentException("configuration must be defined.");
-        
-        wkHtmlWrapper.Init();
+        var taskCompletionSource = new TaskCompletionSource<Stream>();
 
-        var converter = CreateConverter(html, configuration);
+        AddItemToProcessingQueue(new(html,
+                                     null,
+                                     configuration,
+                                     taskCompletionSource,
+                                     token));
 
-        wkHtmlWrapper.SetPhaseChangedCallback(converter, OnPhaseChanged);
-        wkHtmlWrapper.SetProgressChangedCallback(converter, OnProgressChanged);
-        wkHtmlWrapper.SetFinishedCallback(converter, OnFinished);
-        wkHtmlWrapper.SetWarningCallback(converter, OnWarning);
-        wkHtmlWrapper.SetErrorCallback(converter, OnError);
-
-        if (wkHtmlWrapper.Convert(converter) == false)
-            throw WkHtmlToPdfException.UnknownExceptionWhileConverting;
-        
-        var result = wkHtmlWrapper.GetConversionBytes(converter);
-
-        wkHtmlWrapper.DestroyConverter(converter);
-
-        return result;
-    }
-
-    public Task<byte[]> ConvertAsync(string html, IConfiguration configuration, CancellationToken token = default)
-    {
-        if (html is null || html.Length == 0) 
-            throw new ArgumentException("html content must be defined.");
-        
-        if (configuration is null) 
-            throw new ArgumentException("configuration must be defined.");
-        
-        var taskCompletionSource = new TaskCompletionSource<byte[]>();
-        
-        wkHtmlWrapper.Init();
-
-        var converter = CreateConverter(html, configuration);
-        
-        try
-        {
-
-            token.ThrowIfCancellationRequested();
-
-            wkHtmlWrapper.SetPhaseChangedCallback(converter, OnPhaseChanged);
-
-            wkHtmlWrapper.SetProgressChangedCallback(converter, _ =>
-            {
-                OnProgressChanged(converter);
-
-                token.ThrowIfCancellationRequested();
-            });
-
-            wkHtmlWrapper.SetFinishedCallback(converter, (_, success) =>
-            {
-                OnFinished(converter, success);
-
-                if (success == 1)
-                    taskCompletionSource.SetResult(wkHtmlWrapper.GetConversionBytes(converter));
-                else
-                    taskCompletionSource.SetException(WkHtmlToPdfException.UnknownExceptionWhileConverting);
-            });
-
-            wkHtmlWrapper.SetWarningCallback(converter, OnWarning);
-
-            wkHtmlWrapper.SetErrorCallback(converter, OnError);
-
-            wkHtmlWrapper.Convert(converter);
-        }
-        catch (Exception e)
-        {
-            taskCompletionSource.SetException(e);
-        }
-        finally
-        {
-            wkHtmlWrapper.DestroyConverter(converter);
-        }
-        
         return taskCompletionSource.Task;
     }
-    
-    public MemoryStream ConvertAsStream(string html, IConfiguration configuration)
+
+    public Task CreateOnDiskAsync(string html,
+                                  string path,
+                                  PDFConfiguration? configuration = null,
+                                  CancellationToken token = default)
     {
-        if (html is null || html.Length == 0) 
-            throw new ArgumentException("html content must be defined.");
-        
-        if (configuration is null) 
-            throw new ArgumentException("configuration must be defined.");
-        
+        var taskCompletionSource = new TaskCompletionSource<Stream>();
+
+        AddItemToProcessingQueue(new(html,
+                                     path,
+                                     configuration,
+                                     taskCompletionSource,
+                                     token));
+
+        return taskCompletionSource.Task;
+    }
+
+    private Stream Create(string html, string? path, IConfiguration? configuration = null)
+    {
+        if (html is null) throw new ArgumentException("html content must be defined.");
+
         wkHtmlWrapper.Init();
 
-        var converter = CreateConverter(html, configuration);
+        var converter = CreateConverter(html, path, configuration);
 
         wkHtmlWrapper.SetPhaseChangedCallback(converter, OnPhaseChanged);
         wkHtmlWrapper.SetProgressChangedCallback(converter, OnProgressChanged);
@@ -135,44 +78,95 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
 
         if (wkHtmlWrapper.Convert(converter) == false)
             throw WkHtmlToPdfException.UnknownExceptionWhileConverting;
-        
-        var result = wkHtmlWrapper.GetConversionStream(converter);
+
+        if (path is not null)
+        {
+            wkHtmlWrapper.DestroyConverter(converter);
+
+            return Stream.Null;
+        }
+
+        var result = wkHtmlWrapper.GetConversion(converter);
 
         wkHtmlWrapper.DestroyConverter(converter);
-
+        
         return result;
     }
 
-    private IntPtr CreateConverter(string html, IConfiguration configuration)
+    private IntPtr CreateConverter(string html, string? path, IConfiguration? configuration)
     {
         var globalSettings = wkHtmlWrapper.CreateGlobalSettings();
         var objectSettings = wkHtmlWrapper.CreateObjectSettings();
-        
-        foreach (var (name, value, isGlobal) in configuration.LibrarySettings)
+
+        if (configuration is not null)
         {
-            var settingsObject = isGlobal 
-                ? globalSettings 
-                : objectSettings;
-            
-            ApplySetting(settingsObject, name, value, isGlobal);
+            foreach (var (name, value, isGlobal) in configuration.LibrarySettings)
+            {
+                var settingsObject = isGlobal
+                        ? globalSettings
+                        : objectSettings;
+
+                ApplySetting(settingsObject,
+                             name,
+                             value,
+                             isGlobal);
+            }
+        }
+
+        if (path is not null)
+        {
+            ApplySetting(globalSettings,
+                         "out",
+                         path,
+                         true);
         }
 
         var converter = wkHtmlWrapper.CreateConverter(globalSettings);
-        
-        wkHtmlWrapper.AddObject(converter, objectSettings, Encoding.UTF8.GetBytes(html));
-            
+
+        AddHtmlContent(converter, objectSettings, html);
+
         return converter;
     }
-        
-    private void ApplySetting(IntPtr settingsObject, string name, object value, bool isGlobal)
+
+    private void AddHtmlContent(IntPtr converter, IntPtr objectSettings, string html)
+    {
+        var bufferLength = Encoding.UTF8.GetByteCount(html);
+        var buffer = ArrayPool<byte>.Shared.Rent(bufferLength);
+
+        try
+        {
+            Encoding.UTF8.GetBytes(html,
+                                   0,
+                                   html.Length,
+                                   buffer,
+                                   0);
+
+            wkHtmlWrapper.AddObject(converter, objectSettings, buffer);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    private void ApplySetting(IntPtr settingsObject,
+                              string name,
+                              object value,
+                              bool isGlobal)
     {
         if (value is bool b)
         {
-            wkHtmlWrapper.SetSetting(settingsObject, name, b ? "true" : "false", isGlobal);
+            wkHtmlWrapper.SetSetting(settingsObject,
+                                     name,
+                                     b ? "true" : "false",
+                                     isGlobal);
         }
         else if (value is double d)
         {
-            wkHtmlWrapper.SetSetting(settingsObject, name, d.ToString("0.##", CultureInfo.InvariantCulture), isGlobal);
+            wkHtmlWrapper.SetSetting(settingsObject,
+                                     name,
+                                     d.ToString("0.##", CultureInfo.InvariantCulture),
+                                     isGlobal);
         }
         else if (value is Dictionary<string, string> dict)
         {
@@ -181,16 +175,26 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
             foreach (var (key, val) in dict)
             {
                 // https://github.com/wkhtmltopdf/wkhtmltopdf/blob/c754e38b074a75a51327df36c4a53f8962020510/src/lib/reflect.hh#L192
-                    
-                wkHtmlWrapper.SetSetting(settingsObject, name + ".append", null!, isGlobal);
-                wkHtmlWrapper.SetSetting(settingsObject, $"{name}[{index}]", key + "\n" + val, isGlobal);
+
+                wkHtmlWrapper.SetSetting(settingsObject,
+                                         name + ".append",
+                                         null!,
+                                         isGlobal);
+
+                wkHtmlWrapper.SetSetting(settingsObject,
+                                         $"{name}[{index}]",
+                                         key + "\n" + val,
+                                         isGlobal);
 
                 index++;
             }
         }
         else
         {
-            wkHtmlWrapper.SetSetting(settingsObject, name, value.ToString()!, isGlobal);
+            wkHtmlWrapper.SetSetting(settingsObject,
+                                     name,
+                                     value.ToString()!,
+                                     isGlobal);
         }
     }
 }

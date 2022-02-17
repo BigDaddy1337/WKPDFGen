@@ -12,6 +12,9 @@
         <None Update="0.12.5\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="0.12.6\*">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         <None Update="Simple.html">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

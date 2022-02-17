@@ -56,7 +56,7 @@ public class GlobalPdfSettings: IUserSettings
     /// Should the copies be collated. Default = true
     /// </summary>
     [WkHtmlSettings("collate")]
-    public bool? Collate { get; set; }
+    public bool? CopiesCollate { get; set; }
 
     /// <summary>
     /// Should a outline (table of content in the sidebar) be generated and put into the PDF. Default = true
@@ -74,19 +74,13 @@ public class GlobalPdfSettings: IUserSettings
     /// If not set to the empty string a XML representation of the outline is dumped to this file. Default = ""
     /// </summary>
     [WkHtmlSettings("dumpOutline")]
-    public string DumpOutline { get; set; }
-
-    /// <summary>
-    /// The path of the output file, if "-" output is sent to stdout, if empty the output is stored in a buffer. Default = ""
-    /// </summary>
-    [WkHtmlSettings("out")]
-    public string Out { get; set; }
+    public string? DumpOutline { get; set; }
 
     /// <summary>
     /// The title of the PDF document. Default = ""
     /// </summary>
     [WkHtmlSettings("documentTitle")]
-    public string DocumentTitle { get; set; }
+    public string? DocumentTitle { get; set; }
 
     /// <summary>
     /// The maximal DPI to use for images in the pdf document. Default = 600
@@ -104,54 +98,54 @@ public class GlobalPdfSettings: IUserSettings
     /// Path of file used to load and store cookies. Default = ""
     /// </summary>
     [WkHtmlSettings("load.cookieJar")]
-    public string CookieJar { get; set; }
+    public string? CookieJar { get; set; }
 
     /// <summary>
     /// Size of output paper
     /// </summary>
-    public PaperSize PaperSize { get; set; }
+    public PaperSize? PaperSize { get; set; }
 
     /// <summary>
     /// The height of the output document
     /// </summary>
     [WkHtmlSettings("size.height")]
-    private string PaperHeight => PaperSize?.Height;
+    private string? PaperHeight => PaperSize?.Height;
 
     /// <summary>
     /// The width of the output document
     /// </summary>
     [WkHtmlSettings("size.width")]
-    private string PaperWidth => PaperSize?.Width;
+    private string? PaperWidth => PaperSize?.Width;
 
-    public MarginSettings Margins { get; set; } = new MarginSettings();
+    public MarginSettings Margins { get; set; } = new();
 
     /// <summary>
     /// Size of the left margin
     /// </summary>
     [WkHtmlSettings("margin.left")]
-    private string MarginLeft => Margins.GetMarginValue(Margins.Left);
+    private string? MarginLeft => Margins.GetMarginValue(Margins.Left);
 
     /// <summary>
     /// Size of the right margin
     /// </summary>
     [WkHtmlSettings("margin.right")]
-    private string MarginRight => Margins.GetMarginValue(Margins.Right);
+    private string? MarginRight => Margins.GetMarginValue(Margins.Right);
 
     /// <summary>
     /// Size of the top margin
     /// </summary>
     [WkHtmlSettings("margin.top")]
-    private string MarginTop => Margins.GetMarginValue(Margins.Top);
+    private string? MarginTop => Margins.GetMarginValue(Margins.Top);
 
     /// <summary>
     /// Size of the bottom margin
     /// </summary>
     [WkHtmlSettings("margin.bottom")]
-    private string MarginBottom => Margins.GetMarginValue(Margins.Bottom);
+    private string? MarginBottom => Margins.GetMarginValue(Margins.Bottom);
 
     /// <summary>
     /// Set viewport size. Not supported in wkhtmltopdf API since v0.12.2.4 
     /// </summary>
     [WkHtmlSettings("viewportSize")]
-    public string ViewportSize { get; set; }
+    public string? ViewportSize { get; set; }
 }

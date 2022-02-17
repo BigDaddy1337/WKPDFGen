@@ -6,7 +6,7 @@ public class PdfSettings: IUserSettings
     /// The URL or path of the web page to convert, if "-" input is read from stdin. Default = ""
     /// </summary>
     [WkHtmlSettings("page")]
-    public string Page { get; set; }
+    public string? Page { get; set; }
 
     /// <summary>
     /// Should external links in the HTML document be converted into external pdf links. Default = true

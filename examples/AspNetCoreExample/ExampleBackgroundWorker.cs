@@ -1,5 +1,5 @@
-using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -17,12 +17,34 @@ namespace AspNetCoreExample
         
         private readonly IWkHtmlToPdfConverter pdfConverter;
 
-        private readonly PDFConfiguration pdfConfig = new(new PdfSettings(), new GlobalPdfSettings
-        {
-            ColorMode = ColorMode.Color,
-            Orientation = Orientation.Portrait,
-            PaperSize = PaperKind.A4,
-        });
+        /// <summary>
+        /// Details https://wkhtmltopdf.org/libwkhtmltox/pagesettings.html
+        /// Declare settings once.
+        /// </summary>
+        private readonly PDFConfiguration pdfConfig = new(
+            new PdfSettings
+            {
+                PagesCount = true,
+                HeaderSettings = new HeaderSettings
+                {
+                    FontSize = 14,
+                    Line = false
+                },
+                FooterSettings = new FooterSettings
+                {
+                    FontSize = 14,
+                    Line = false,
+                    Spacing = 2.0
+                }
+            }, 
+            new GlobalPdfSettings
+            {
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = PaperKind.A4,
+                Copies = 1
+            }
+        );
 
         public ExampleBackgroundWorker(IWkHtmlToPdfConverter pdfConverter, ILogger<ExampleBackgroundWorker> logger)
         {
@@ -34,22 +56,28 @@ namespace AspNetCoreExample
         {
             var html = await File.ReadAllTextAsync("Simple.html", stoppingToken);
             
-            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-            var result1 = pdfConverter.Convert(html, pdfConfig);
-            await WriteToFileAsync("bytes", result1);
-            
-            var result2 = await pdfConverter.ConvertAsync(html, pdfConfig, stoppingToken);
-            await WriteToFileAsync("bytes-task", result2);
+            await CreatePdf(html, stoppingToken);
+            await CreatePdfOnDisk(html, stoppingToken);
+        }
 
-            var result3 = pdfConverter.ConvertAsStream(html, pdfConfig);
-            await WriteToFileAsync("stream", result3.ToArray());
+        private async Task CreatePdf(string html, CancellationToken stoppingToken)
+        {
+            var fileStream = await pdfConverter.CreateAsync(html, pdfConfig, stoppingToken);
+                    
+            await using var writeFileStream = File.OpenWrite("example.pdf");
+                    
+            await fileStream.CopyToAsync(writeFileStream, stoppingToken);
+
+            logger.LogInformation("Created PDF file with size {Length}", writeFileStream.Length);
+        }
+        
+        private async Task CreatePdfOnDisk(string html, CancellationToken stoppingToken)
+        {
+            const string path = "example-on-disk.pdf";
             
-            async Task WriteToFileAsync(string type, byte[] file)
-            {
-                await File.WriteAllBytesAsync($"example-{type}.pdf", file, stoppingToken);
+            await pdfConverter.CreateOnDiskAsync(html, path, pdfConfig, stoppingToken);
                 
-                logger.LogInformation("Created PDF file with size {Length} via {Type}", file.Length, type);
-            }
+            logger.LogInformation("Created PDF at {Path}", path);
         }
     }
 }

@@ -16,40 +16,43 @@ public interface IConfiguration
 {
     List<LibrarySetting> LibrarySettings { get; }
 }
-    
-public abstract class ConfigurationBase: IConfiguration
+
+public abstract class ConfigurationBase : IConfiguration
 {
-    protected ConfigurationBase(params IUserSettings[] userSettingCollections)
+    protected ConfigurationBase(params IUserSettings?[] userSettingCollections)
     {
         FillLibrarySettings(userSettingCollections);
     }
-    
+
     public List<LibrarySetting> LibrarySettings { get; } = new();
 
-    private void FillLibrarySettings(params IUserSettings[] userSettingCollections)
+    private void FillLibrarySettings(params IUserSettings?[] userSettingCollections)
     {
         foreach (var userSettingCollection in userSettingCollections)
         {
+            if (userSettingCollection is null) continue;
+
             var isGlobalSettings = userSettingCollection is GlobalPdfSettings;
 
             var properties = userSettingCollection
-                .GetType()
-                .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                             .GetType()
+                             .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             foreach (var property in properties)
             {
                 var propertyValue = property.GetValue(userSettingCollection);
                 if (propertyValue is null) continue;
-
-                var attributes = property
-                    .GetCustomAttributes()
-                    .ToArray();
-
-                if (attributes.Length > 0 && attributes[0] is WkHtmlSettingsAttribute attribute)
+                
+                foreach (var attr in property.GetCustomAttributes())
                 {
+                    if (attr is not WkHtmlSettingsAttribute attribute) continue;
+
                     LibrarySettings.Add(new LibrarySetting(attribute.Name, propertyValue, isGlobalSettings));
+                        
+                    break;
                 }
-                else if (propertyValue is IUserSettings childSetting)
+                
+                if (propertyValue is IUserSettings childSetting)
                 {
                     FillLibrarySettings(childSetting);
                 }
@@ -57,9 +60,11 @@ public abstract class ConfigurationBase: IConfiguration
         }
     }
 }
-    
-    
+
 // ReSharper disable once InconsistentNaming
+/// <summary>
+/// Details https://wkhtmltopdf.org/libwkhtmltox/pagesettings.html
+/// </summary>
 public class PDFConfiguration : ConfigurationBase
 {
     public PDFConfiguration(PdfSettings pdfSettings, GlobalPdfSettings globalPdfSettings)

@@ -10,7 +10,7 @@ namespace WKPDFGen.Tests
             var solutionDir = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)
                 .Parent.Parent.Parent.Parent.Parent.FullName;
             
-            return Path.Combine(solutionDir, "examples", "AspNetCoreExample", "0.12.5");
+            return Path.Combine(solutionDir, "examples", "AspNetCoreExample", "0.12.6");
         }
     }
 }

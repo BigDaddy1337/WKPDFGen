@@ -17,9 +17,9 @@ namespace AspNetCoreExample
         {
             services.AddWkPdfGenerator(options =>
             {
-                options.LinuxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.5", "libwkhtmltox.so");
-                options.WindowsLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.5", "libwkhtmltox.dll");
-                options.OsxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.5", "libwkhtmltox.dylib");
+                options.LinuxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.so.0.12.6");
+                options.WindowsLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.dll");
+                options.OsxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.0.12.6.dylib");
             });
 
             services.AddHostedService<ExampleBackgroundWorker>();

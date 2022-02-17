@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
@@ -27,9 +26,7 @@ public interface IWkHtmlWrapper : IDisposable
 
     void DestroyConverter(IntPtr converter);
 
-    byte[] GetConversionBytes(IntPtr converter);
-
-    MemoryStream GetConversionStream(IntPtr converter);
+    Stream GetConversion(IntPtr converter);
 
     int SetPhaseChangedCallback(IntPtr converter, VoidCallback callback);
 
@@ -49,7 +46,7 @@ public interface IWkHtmlWrapper : IDisposable
 
     string? GetProgressString(IntPtr converter);
 }
-    
+
 public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 {
     private readonly ILogger<WkHtmlWrapper> logger;
@@ -70,9 +67,9 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
         if (WkHtmlBindings.wkhtmltopdf_init(0) == 1)
         {
             var version = GetLibraryVersion();
-            
+
             logger.LogInformation("[WkHTMLtoPDF] Initialized library with version {version}", version);
-            
+
             isLoaded = true;
         }
     }
@@ -93,13 +90,16 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 
         return WkHtmlBindings.wkhtmltopdf_set_global_setting(settings, name, value);
     }
-        
+
     public IntPtr CreateObjectSettings()
     {
         return WkHtmlBindings.wkhtmltopdf_create_object_settings();
     }
 
-    public void SetSetting(IntPtr settings, string name, string value, bool isGlobal)
+    public void SetSetting(IntPtr settings,
+                           string name,
+                           string value,
+                           bool isGlobal)
     {
         if (isGlobal) SetGlobalSetting(settings, name, value);
         else SetObjectSetting(settings, name, value);
@@ -111,7 +111,7 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 
         return WkHtmlBindings.wkhtmltopdf_set_object_setting(settings, name, value);
     }
-        
+
     public IntPtr CreateConverter(IntPtr globalSettings)
     {
         return WkHtmlBindings.wkhtmltopdf_create_converter(globalSettings);
@@ -119,9 +119,11 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 
     public void AddObject(IntPtr converter, IntPtr objectSettings, byte[] data)
     {
+        logger.LogDebug("[WkHTMLtoPDF] Added content object {DataBytesLength} bytes to object settings", data.Length);
+
         WkHtmlBindings.wkhtmltopdf_add_object(converter, objectSettings, data);
     }
-        
+
     public bool Convert(IntPtr converter)
     {
         return WkHtmlBindings.wkhtmltopdf_convert(converter);
@@ -129,41 +131,21 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 
     public void DestroyConverter(IntPtr converter)
     {
+        logger.LogDebug("[WkHTMLtoPDF] Converter destroyed");
+
         WkHtmlBindings.wkhtmltopdf_destroy_converter(converter);
     }
 
-    public byte[] GetConversionBytes(IntPtr converter)
+    public unsafe Stream GetConversion(IntPtr converter)
     {
-        var length = WkHtmlBindings.wkhtmltopdf_get_output(converter, out var resultPointer);
-            
-        var result = new byte[length];
-   
-        Marshal.Copy(resultPointer, result, 0, length);
-        
-        return result;
-    }
-    
-    public unsafe MemoryStream GetConversionStream(IntPtr converter)
-    {
-        var length = WkHtmlBindings.wkhtmltopdf_get_output(converter, out var resultPointer);
-        
-        var buffer = new Span<byte>(resultPointer.ToPointer(), length);
+        var length = WkHtmlBindings.wkhtmltopdf_get_output(converter, out var unmanaged);
 
-        var stream = new MemoryStream(buffer.Length);
-        
-        var sharedBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
-        
-        try
-        {
-            buffer.CopyTo(sharedBuffer);
-            
-            stream.Write(sharedBuffer, 0, buffer.Length);
-        }
-        finally { ArrayPool<byte>.Shared.Return(sharedBuffer); }
+        logger.LogDebug("[WkHTMLtoPDF] Fetch conversion result {ConversionResultBytesLength} bytes", length);
 
-        stream.Seek(0, SeekOrigin.Begin);
-        
-        return stream;
+        return new UnmanagedMemoryStream((byte*)unmanaged.ToPointer(),
+                                         length,
+                                         length,
+                                         FileAccess.Read);
     }
 
     public int SetPhaseChangedCallback(IntPtr converter, VoidCallback callback)
@@ -210,7 +192,7 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
     {
         return Marshal.PtrToStringAnsi(WkHtmlBindings.wkhtmltopdf_progress_string(converter));
     }
-    
+
     public void Dispose()
     {
         WkHtmlBindings.wkhtmltopdf_deinit();

@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WKPDFGen.Tests", "WKPDFGen.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCoreExample", "..\examples\AspNetCoreExample\AspNetCoreExample.csproj", "{DEDAA890-9AE1-4A4A-BB8E-7B1B0D386E74}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WKPDFGen.Benchmarks", "WKPDFGen.Benchmarks\WKPDFGen.Benchmarks.csproj", "{908AA1FD-24F0-4FD8-A38F-43EA08D5687C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{DEDAA890-9AE1-4A4A-BB8E-7B1B0D386E74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DEDAA890-9AE1-4A4A-BB8E-7B1B0D386E74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DEDAA890-9AE1-4A4A-BB8E-7B1B0D386E74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{908AA1FD-24F0-4FD8-A38F-43EA08D5687C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{908AA1FD-24F0-4FD8-A38F-43EA08D5687C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{908AA1FD-24F0-4FD8-A38F-43EA08D5687C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{908AA1FD-24F0-4FD8-A38F-43EA08D5687C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

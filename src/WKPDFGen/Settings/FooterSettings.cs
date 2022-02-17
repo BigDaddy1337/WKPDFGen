@@ -12,25 +12,25 @@ public class FooterSettings: IUserSettings
     /// The name of the font to use for the footer. Default = "Ariel"
     /// </summary>
     [WkHtmlSettings("footer.fontName")]
-    public string FontName { get; set; }
+    public string? FontName { get; set; }
 
     /// <summary>
     /// The string to print in the left part of the footer, note that some sequences are replaced in this string, see the wkhtmltopdf manual. Default = ""
     /// </summary>
     [WkHtmlSettings("footer.left")]
-    public string Left { get; set; }
+    public string? Left { get; set; }
 
     /// <summary>
     /// The text to print in the right part of the footer, note that some sequences are replaced in this string, see the wkhtmltopdf manual. Default = ""
     /// </summary>
     [WkHtmlSettings("footer.center")]
-    public string Center { get; set; }
+    public string? Center { get; set; }
 
     /// <summary>
     /// The text to print in the right part of the footer, note that some sequences are replaced in this string, see the wkhtmltopdf manual. Default = ""
     /// </summary>
     [WkHtmlSettings("footer.right")]
-    public string Right { get; set; }
+    public string? Right { get; set; }
 
     /// <summary>
     /// Whether a line should be printed above the footer. Default = false
@@ -48,5 +48,5 @@ public class FooterSettings: IUserSettings
     /// Url for a HTML document to use for the footer. Default = ""
     /// </summary>
     [WkHtmlSettings("footer.htmlUrl")]
-    public string HtmUrl { get; set; }
+    public string? HtmlUrl { get; set; }
 }

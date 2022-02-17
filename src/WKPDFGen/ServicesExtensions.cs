@@ -7,11 +7,11 @@ namespace WKPDFGen;
 
 public class WkPdfOptions
 {
-    public string WindowsLibPath { get; set; }
+    public string? WindowsLibPath { get; set; }
         
-    public string LinuxLibPath { get; set; }
+    public string? LinuxLibPath { get; set; }
         
-    public string OsxLibPath { get; set; }
+    public string? OsxLibPath { get; set; }
 }
     
 public static class ServicesExtensions
