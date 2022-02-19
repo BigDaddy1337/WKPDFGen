@@ -1,24 +1,28 @@
 using System;
-using System.Data;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Loader;
 
 namespace WKPDFGen.Library;
 
-public partial class WkHtmlWrapper: AssemblyLoadContext
+public partial class WkHtmlWrapper
 {
-    public void LoadWkHtmlLibraryDll(WkPdfOptions options)
+    private IntPtr libraryHandle = IntPtr.Zero;
+
+    private IntPtr ImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
-        string libPath;
-            
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            libPath = options.OsxLibPath ?? throw new NoNullAllowedException("OsxLibPath option is required for current OS");
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            libPath = options.LinuxLibPath ?? throw new NoNullAllowedException("LinuxLibPath option is required for current OS");
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            libPath = options.WindowsLibPath ?? throw new NoNullAllowedException("WindowsLibPath option is required for current OS");
-        else throw new PlatformNotSupportedException();
-            
-        LoadUnmanagedDllFromPath(libPath);
+        if (libraryName != WkHtmlBindings.Dllname) throw new NotImplementedException($"Library {libraryName} was unexpected.");
+
+        if (libraryHandle == IntPtr.Zero)
+            NativeLibrary.TryLoad(libraryPath, out libraryHandle);
+
+        return libraryHandle;
+    }
+
+
+    private void FreeLibraryHandle()
+    {
+        if (libraryHandle == IntPtr.Zero) return;
+
+        NativeLibrary.Free(libraryHandle);
     }
 }

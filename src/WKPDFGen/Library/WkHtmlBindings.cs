@@ -5,7 +5,7 @@ namespace WKPDFGen.Library;
 
 public static class WkHtmlBindings
 {
-    private const string Dllname = "libwkhtmltox";
+    public const string Dllname = "wkhtmltox";
 
     /// <summary>
     /// This value "extends" UnmanagedType enum from System.Runtime.InteropServices v4.1.0 which doesn't have LPUTF8Str (enum value is 48) enumartion defined

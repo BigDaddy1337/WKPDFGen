@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
@@ -52,12 +53,22 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
     private readonly ILogger<WkHtmlWrapper> logger;
 
     private bool isLoaded;
+    
+    private readonly string libraryPath;
 
     public WkHtmlWrapper(IOptions<WkPdfOptions> wkPdfOptions, ILogger<WkHtmlWrapper> logger)
     {
         this.logger = logger;
-
-        LoadWkHtmlLibraryDll(wkPdfOptions.Value);
+        
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            libraryPath = wkPdfOptions.Value.OsxLibPath ?? throw new NoNullAllowedException("OsxLibPath option is required for current OS");
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            libraryPath = wkPdfOptions.Value.LinuxLibPath ?? throw new NoNullAllowedException("LinuxLibPath option is required for current OS");
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            libraryPath = wkPdfOptions.Value.WindowsLibPath ?? throw new NoNullAllowedException("WindowsLibPath option is required for current OS");
+        else throw new PlatformNotSupportedException();
+        
+        NativeLibrary.SetDllImportResolver(typeof(WkHtmlWrapper).Assembly, ImportResolver);
     }
 
     public void Init()
@@ -196,5 +207,7 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
     public void Dispose()
     {
         WkHtmlBindings.wkhtmltopdf_deinit();
+
+        FreeLibraryHandle();
     }
 }
