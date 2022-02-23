@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using WKPDFGen;
+using WKPDFGen.Converters;
 
 namespace AspNetCoreExample
 {
@@ -17,7 +17,7 @@ namespace AspNetCoreExample
         {
             services.AddWkPdfGenerator(options =>
             {
-                options.LinuxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.so");
+                options.LinuxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.so.0.12.6");
                 options.WindowsLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.dll");
                 options.OsxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.dylib");
             });
@@ -37,7 +37,19 @@ namespace AspNetCoreExample
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/", async context => { await context.Response.WriteAsync("Hello World!"); });
+                endpoints.MapGet("/",
+                                 async context =>
+                                 {
+                                     var converter = context.RequestServices.GetService<IWkHtmlToPdfConverter>();
+                                     
+                                     var html = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Simple.html"));
+
+                                     var pdfStream = await converter!.CreateAsync(html);
+
+                                     await pdfStream.CopyToAsync(context.Response.Body);
+                                     
+                                     await context.Response.CompleteAsync();
+                                 });
             });
         }
     }

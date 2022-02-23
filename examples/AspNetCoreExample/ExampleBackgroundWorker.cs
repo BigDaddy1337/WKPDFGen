@@ -1,5 +1,5 @@
+using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -54,7 +54,7 @@ namespace AspNetCoreExample
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var html = await File.ReadAllTextAsync("Simple.html", stoppingToken);
+            var html = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Simple.html"), stoppingToken);
             
             await CreatePdf(html, stoppingToken);
             await CreatePdfOnDisk(html, stoppingToken);

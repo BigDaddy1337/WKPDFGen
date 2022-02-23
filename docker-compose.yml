@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  wkpdfgen-example:
+    image: wkpdfgen-example
+    build:
+      context: .
+      dockerfile: examples/Linux.Dockerfile
+    ports:
+      - 5000:5000

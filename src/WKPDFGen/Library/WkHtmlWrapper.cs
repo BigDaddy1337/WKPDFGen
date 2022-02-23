@@ -68,7 +68,7 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
             libraryPath = wkPdfOptions.Value.WindowsLibPath ?? throw new NoNullAllowedException("WindowsLibPath option is required for current OS");
         else throw new PlatformNotSupportedException();
         
-        NativeLibrary.SetDllImportResolver(typeof(WkHtmlWrapper).Assembly, ImportResolver);
+        NativeLibrary.SetDllImportResolver(typeof(WkHtmlWrapper).Assembly, NativeLibraryImportResolver);
     }
 
     public void Init()

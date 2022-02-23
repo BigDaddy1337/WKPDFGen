@@ -8,11 +8,10 @@ public partial class WkHtmlToPdfConverter
 {
     private void OnPhaseChanged(IntPtr converter)
     {
-        var phaseCount = wkHtmlWrapper.GetPhaseCount(converter);
         var currentPhase = wkHtmlWrapper.GetCurrentPhase(converter);
         var phaseDescription = wkHtmlWrapper.GetPhaseDescription(converter, currentPhase);
         
-        logger.LogDebug("[WkHTMLtoPDF] [PhaseChanged] Converting phase changed to {currentPhase} ({phaseDescription}) total phases count {phaseCount}", currentPhase, phaseDescription, phaseCount);
+        logger.LogDebug("[WkHTMLtoPDF] [PhaseChanged] Converting phase changed to {currentPhase} ({phaseDescription})", currentPhase, phaseDescription);
     }
 
     private void OnProgressChanged(IntPtr converter)
