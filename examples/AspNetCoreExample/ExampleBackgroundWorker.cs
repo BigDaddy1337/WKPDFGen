@@ -1,13 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WKPDFGen;
 using WKPDFGen.Converters;
 using WKPDFGen.Settings;
-using WKPDFGen.Settings.Settings;
 using WKPDFGen.Settings.Units;
 
 namespace AspNetCoreExample
@@ -16,43 +15,69 @@ namespace AspNetCoreExample
     {
         private readonly ILogger logger;
         
-        private readonly IConverter basicConverter;
+        private readonly IWkHtmlToPdfConverter pdfConverter;
 
-        private readonly PdfConfig pdfConfig = new PdfConfig
-        {
-            GlobalPdfSettings =
+        /// <summary>
+        /// Details https://wkhtmltopdf.org/libwkhtmltox/pagesettings.html
+        /// Declare settings once.
+        /// </summary>
+        private readonly PDFConfiguration pdfConfig = new(
+            new PdfSettings
+            {
+                PagesCount = true,
+                HeaderSettings = new HeaderSettings
+                {
+                    FontSize = 14,
+                    Line = false
+                },
+                FooterSettings = new FooterSettings
+                {
+                    FontSize = 14,
+                    Line = false,
+                    Spacing = 2.0
+                }
+            }, 
+            new GlobalPdfSettings
             {
                 ColorMode = ColorMode.Color,
                 Orientation = Orientation.Portrait,
                 PaperSize = PaperKind.A4,
-            },
-            PdfSettings = new List<PdfSettings>
-            {
-                new PdfSettings
-                {
-                    HtmlContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In consectetur mauris eget ultrices iaculis.",
-                }
+                Copies = 1
             }
-        };
+        );
 
-        public ExampleBackgroundWorker(IConverter basicConverter, ILogger<ExampleBackgroundWorker> logger)
+        public ExampleBackgroundWorker(IWkHtmlToPdfConverter pdfConverter, ILogger<ExampleBackgroundWorker> logger)
         {
-            this.basicConverter = basicConverter;
+            this.pdfConverter = pdfConverter;
             this.logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (stoppingToken.IsCancellationRequested == false)
-            {
-                await Task.Delay(3000, stoppingToken);
+            var html = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Simple.html"), stoppingToken);
+            
+            await CreatePdf(html, stoppingToken);
+            await CreatePdfOnDisk(html, stoppingToken);
+        }
 
-                var result = basicConverter.Convert(pdfConfig);
+        private async Task CreatePdf(string html, CancellationToken stoppingToken)
+        {
+            var fileStream = await pdfConverter.CreateAsync(html, pdfConfig, stoppingToken);
+                    
+            await using var writeFileStream = File.OpenWrite("example.pdf");
+                    
+            await fileStream.CopyToAsync(writeFileStream, stoppingToken);
+
+            logger.LogInformation("Created PDF file with size {Length}", writeFileStream.Length);
+        }
+        
+        private async Task CreatePdfOnDisk(string html, CancellationToken stoppingToken)
+        {
+            const string path = "example-on-disk.pdf";
+            
+            await pdfConverter.CreateOnDiskAsync(html, path, pdfConfig, stoppingToken);
                 
-                await File.WriteAllBytesAsync("example.pdf", result, stoppingToken);
-                
-                logger.LogInformation($"Creted PDF file with size {result.Length} at {DateTime.Now}");
-            }
+            logger.LogInformation("Created PDF at {Path}", path);
         }
     }
 }
