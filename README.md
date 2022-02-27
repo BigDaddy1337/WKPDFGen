@@ -1,5 +1,8 @@
 # WKPDFGen
 
+[![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/WKPDFGen)](https://www.nuget.org/packages/WKPDFGen)
+
+
 C# wrapper for wkhtmltopdf library for cross-platform generating PDF files from HTML 
 
 ## Usage
