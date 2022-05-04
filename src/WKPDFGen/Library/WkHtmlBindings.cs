@@ -34,6 +34,9 @@ public static class WkHtmlBindings
         [MarshalAs(Lputf8Str)]
         string value
     );
+    
+    [DllImport(Dllname, CharSet = Charset)]
+    public static extern int wkhtmltopdf_destroy_global_settings(IntPtr settings);
 
     [DllImport(Dllname, CharSet = Charset, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr wkhtmltopdf_create_object_settings();
@@ -46,6 +49,9 @@ public static class WkHtmlBindings
         [MarshalAs(Lputf8Str)]
         string value
     );
+    
+    [DllImport(Dllname, CharSet = Charset, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int wkhtmltopdf_destroy_object_settings(IntPtr settings);
 
     [DllImport(Dllname, CharSet = Charset, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr wkhtmltopdf_create_converter(IntPtr globalSettings);

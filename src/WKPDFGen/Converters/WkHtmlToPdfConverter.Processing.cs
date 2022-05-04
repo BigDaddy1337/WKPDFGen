@@ -11,7 +11,7 @@ public partial class WkHtmlToPdfConverter
 {
     private record ProcessingItem(string Html,
                                   string? OutputPath,
-                                  IConfiguration? Configuration,
+                                  IWKPDFGenConfiguration? Configuration,
                                   TaskCompletionSource<Stream> TaskCompletionSource,
                                   CancellationToken Token);
 

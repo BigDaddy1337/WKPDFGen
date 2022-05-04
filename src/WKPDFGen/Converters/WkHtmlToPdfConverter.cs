@@ -14,11 +14,11 @@ namespace WKPDFGen.Converters;
 
 public interface IWkHtmlToPdfConverter
 {
-    Task<Stream> CreateAsync(string html, PDFConfiguration? configuration = null, CancellationToken token = default);
+    Task<Stream> CreateAsync(string html, WKPDFGenConfiguration? configuration = null, CancellationToken token = default);
 
     Task CreateOnDiskAsync(string html,
                            string path,
-                           PDFConfiguration? configuration = null,
+                           WKPDFGenConfiguration? configuration = null,
                            CancellationToken token = default);
 }
 
@@ -33,9 +33,9 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
         this.logger = logger;
     }
 
-    public Task<Stream> CreateAsync(string html, PDFConfiguration? configuration = null, CancellationToken token = default)
+    public Task<Stream> CreateAsync(string html, WKPDFGenConfiguration? configuration = null, CancellationToken token = default)
     {
-        var taskCompletionSource = new TaskCompletionSource<Stream>();
+        var taskCompletionSource = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         AddItemToProcessingQueue(new(html,
                                      null,
@@ -48,10 +48,10 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
 
     public Task CreateOnDiskAsync(string html,
                                   string path,
-                                  PDFConfiguration? configuration = null,
+                                  WKPDFGenConfiguration? configuration = null,
                                   CancellationToken token = default)
     {
-        var taskCompletionSource = new TaskCompletionSource<Stream>();
+        var taskCompletionSource = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         AddItemToProcessingQueue(new(html,
                                      path,
@@ -62,13 +62,13 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
         return taskCompletionSource.Task;
     }
 
-    private Stream Create(string html, string? path, IConfiguration? configuration = null)
+    private Stream Create(string html, string? path, IWKPDFGenConfiguration? configuration = null)
     {
         if (html is null) throw new ArgumentException("html content must be defined.");
 
         wkHtmlWrapper.Init();
 
-        var converter = CreateConverter(html, path, configuration);
+        var (converter, globalSettings, objectSettigns) = CreateConverter(html, path, configuration);
 
         wkHtmlWrapper.SetPhaseChangedCallback(converter, OnPhaseChanged);
         wkHtmlWrapper.SetProgressChangedCallback(converter, OnProgressChanged);
@@ -81,19 +81,26 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
 
         if (path is not null)
         {
-            wkHtmlWrapper.DestroyConverter(converter);
+            DisposeAll();
 
             return Stream.Null;
         }
 
         var result = wkHtmlWrapper.GetConversion(converter);
 
-        wkHtmlWrapper.DestroyConverter(converter);
+        DisposeAll();
         
         return result;
+
+        void DisposeAll()
+        {
+            wkHtmlWrapper.DestroyObjectSetting(objectSettigns);
+            wkHtmlWrapper.DestroyGlobalSetting(globalSettings);
+            wkHtmlWrapper.DestroyConverter(converter);
+        }
     }
 
-    private IntPtr CreateConverter(string html, string? path, IConfiguration? configuration)
+    private (IntPtr converter, IntPtr globalSettings, IntPtr objectSettigns) CreateConverter(string html, string? path, IWKPDFGenConfiguration? configuration)
     {
         var globalSettings = wkHtmlWrapper.CreateGlobalSettings();
         var objectSettings = wkHtmlWrapper.CreateObjectSettings();
@@ -125,7 +132,7 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
 
         AddHtmlContent(converter, objectSettings, html);
 
-        return converter;
+        return (converter, globalSettings, objectSettings);
     }
 
     private void AddHtmlContent(IntPtr converter, IntPtr objectSettings, string html)

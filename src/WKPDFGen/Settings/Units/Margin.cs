@@ -9,9 +9,9 @@ public enum MarginUnit
     Centimeters
 }
     
-public class MarginSettings
+public class Margin
 {
-    public MarginSettings(double top, double right, double bottom, double left, MarginUnit unit = MarginUnit.Millimeters)
+    public Margin(double top, double right, double bottom, double left, MarginUnit unit = MarginUnit.Millimeters)
     {
         Top = top;
         Bottom = bottom;
@@ -20,7 +20,7 @@ public class MarginSettings
         Unit = unit;
     }
         
-    public MarginSettings()
+    public Margin()
     {
         Unit = MarginUnit.Millimeters;
     }

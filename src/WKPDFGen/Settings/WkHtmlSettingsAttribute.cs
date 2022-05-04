@@ -6,9 +6,12 @@ namespace WKPDFGen.Settings;
 public class WkHtmlSettingsAttribute : Attribute
 {
     public string Name { get; }
-
-    public WkHtmlSettingsAttribute(string name)
+    
+    public bool IsGlobal { get; }
+    
+    public WkHtmlSettingsAttribute(string name, bool isGlobal = false)
     {
         Name = name;
+        IsGlobal = isGlobal;
     }
 }

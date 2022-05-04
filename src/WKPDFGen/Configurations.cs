@@ -11,28 +11,26 @@ public interface IUserSettings
     
 public record LibrarySetting(string Name, object Value, bool IsGlobal);
 
-public interface IConfiguration
+public interface IWKPDFGenConfiguration
 {
     List<LibrarySetting> LibrarySettings { get; }
 }
 
-public abstract class ConfigurationBase : IConfiguration
+public class WKPDFGenConfiguration : IWKPDFGenConfiguration
 {
-    protected ConfigurationBase(params IUserSettings?[] userSettingCollections)
+    public WKPDFGenConfiguration(params IUserSettings?[] settings)
     {
-        FillLibrarySettings(userSettingCollections);
+        FillLibrarySettings(settings);
     }
 
     public List<LibrarySetting> LibrarySettings { get; } = new();
 
-    private void FillLibrarySettings(params IUserSettings?[] userSettingCollections)
+    private void FillLibrarySettings(params IUserSettings?[] userSettingsCollections)
     {
-        foreach (var userSettingCollection in userSettingCollections)
+        foreach (var userSettingCollection in userSettingsCollections)
         {
             if (userSettingCollection is null) continue;
-
-            var isGlobalSettings = userSettingCollection is GlobalPdfSettings;
-
+            
             var properties = userSettingCollection
                              .GetType()
                              .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -46,7 +44,7 @@ public abstract class ConfigurationBase : IConfiguration
                 {
                     if (attr is not WkHtmlSettingsAttribute attribute) continue;
 
-                    LibrarySettings.Add(new LibrarySetting(attribute.Name, propertyValue, isGlobalSettings));
+                    LibrarySettings.Add(new LibrarySetting(attribute.Name, propertyValue, attribute.IsGlobal));
                         
                     break;
                 }
@@ -57,17 +55,5 @@ public abstract class ConfigurationBase : IConfiguration
                 }
             }
         }
-    }
-}
-
-// ReSharper disable once InconsistentNaming
-/// <summary>
-/// Details https://wkhtmltopdf.org/libwkhtmltox/pagesettings.html
-/// </summary>
-public class PDFConfiguration : ConfigurationBase
-{
-    public PDFConfiguration(PdfSettings pdfSettings, GlobalPdfSettings globalPdfSettings)
-        : base(pdfSettings, globalPdfSettings)
-    {
     }
 }
