@@ -15,7 +15,7 @@
         <None Update="0.12.6\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Simple.html">
+        <None Update="Assets\*">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

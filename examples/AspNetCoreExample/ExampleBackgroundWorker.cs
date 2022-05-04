@@ -21,10 +21,19 @@ namespace AspNetCoreExample
         /// Details https://wkhtmltopdf.org/libwkhtmltox/pagesettings.html
         /// Declare settings once.
         /// </summary>
-        private readonly PDFConfiguration pdfConfig = new(
+        private readonly WKPDFGenConfiguration pdfConfig = new(
             new PdfSettings
             {
+                DocumentTitle = "Example PDF",
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = PaperKind.A4,
+                Copies = 1,
                 PagesCount = true,
+                LoadSettings = new LoadSettings
+                {
+                    BlockLocalFileAccess = false
+                },
                 HeaderSettings = new HeaderSettings
                 {
                     FontSize = 14,
@@ -36,13 +45,6 @@ namespace AspNetCoreExample
                     Line = false,
                     Spacing = 2.0
                 }
-            }, 
-            new GlobalPdfSettings
-            {
-                ColorMode = ColorMode.Color,
-                Orientation = Orientation.Portrait,
-                PaperSize = PaperKind.A4,
-                Copies = 1
             }
         );
 
@@ -54,8 +56,8 @@ namespace AspNetCoreExample
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var html = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Simple.html"), stoppingToken);
-            
+            var html = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simple.html"), stoppingToken);
+
             await CreatePdf(html, stoppingToken);
             await CreatePdfOnDisk(html, stoppingToken);
         }

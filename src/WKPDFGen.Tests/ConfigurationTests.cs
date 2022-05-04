@@ -9,9 +9,13 @@ public class ConfigurationTests
     [Test]
     public void FillLibrarySettingsTest()
     {
-        var pdfConfig = new PDFConfiguration(
+        var pdfConfig = new WKPDFGenConfiguration(
             new PdfSettings
             {
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = PaperKind.A4,
+                Copies = 1,
                 PagesCount = true,
                 HeaderSettings = new HeaderSettings
                 {
@@ -24,13 +28,6 @@ public class ConfigurationTests
                     Line = false,
                     Spacing = 2.0
                 }
-            }, 
-            new GlobalPdfSettings
-            {
-                ColorMode = ColorMode.Color,
-                Orientation = Orientation.Portrait,
-                PaperSize = PaperKind.A4,
-                Copies = 1
             }
         );
         

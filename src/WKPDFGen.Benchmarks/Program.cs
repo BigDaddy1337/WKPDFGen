@@ -16,10 +16,14 @@ public class Benchmarks
     // | PDFConfigurationConstructor | 30.93 us | 0.234 us | 0.208 us | 1.6479 |      7 KB |
     
     [Benchmark]
-    public PDFConfiguration PDFConfigurationConstructor()
+    public WKPDFGenConfiguration PDFConfigurationConstructor()
     {
         return new(new PdfSettings
                    {
+                       ColorMode = ColorMode.Color,
+                       Orientation = Orientation.Portrait,
+                       PaperSize = PaperKind.A4,
+                       Copies = 1,
                        PagesCount = true,
                        HeaderSettings = new HeaderSettings
                        {
@@ -32,13 +36,6 @@ public class Benchmarks
                            Line = false,
                            Spacing = 2.0
                        }
-                   },
-                   new GlobalPdfSettings
-                   {
-                       ColorMode = ColorMode.Color,
-                       Orientation = Orientation.Portrait,
-                       PaperSize = PaperKind.A4,
-                       Copies = 1
                    });
     }
 

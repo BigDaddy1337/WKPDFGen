@@ -1,6 +1,6 @@
 namespace WKPDFGen.Settings;
 
-public class PdfSettings: IUserSettings
+public partial class PdfSettings: IUserSettings
 {
     /// <summary>
     /// The URL or path of the web page to convert, if "-" input is read from stdin. Default = ""

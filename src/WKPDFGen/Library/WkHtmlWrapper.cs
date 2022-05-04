@@ -16,6 +16,10 @@ public interface IWkHtmlWrapper : IDisposable
     IntPtr CreateGlobalSettings();
         
     IntPtr CreateObjectSettings();
+    
+    int DestroyGlobalSetting(IntPtr settings);
+    
+    int DestroyObjectSetting(IntPtr settings);
 
     void SetSetting(IntPtr settings, string name, string value, bool isGlobal);
         
@@ -67,7 +71,7 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             libraryPath = wkPdfOptions.Value.WindowsLibPath ?? throw new NoNullAllowedException("WindowsLibPath option is required for current OS");
         else throw new PlatformNotSupportedException();
-        
+
         NativeLibrary.SetDllImportResolver(typeof(WkHtmlWrapper).Assembly, NativeLibraryImportResolver);
     }
 
@@ -107,6 +111,20 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
         return WkHtmlBindings.wkhtmltopdf_create_object_settings();
     }
 
+    public int DestroyGlobalSetting(IntPtr settings)
+    {
+        logger.LogDebug("[WkHTMLtoPDF] GlobalSetting destroing");
+
+        return WkHtmlBindings.wkhtmltopdf_destroy_global_settings(settings);
+    }
+
+    public int DestroyObjectSetting(IntPtr settings)
+    {
+        logger.LogDebug("[WkHTMLtoPDF] ObjectSetting destroing");
+
+        return WkHtmlBindings.wkhtmltopdf_destroy_object_settings(settings);
+    }
+
     public void SetSetting(IntPtr settings,
                            string name,
                            string value,
@@ -142,9 +160,9 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 
     public void DestroyConverter(IntPtr converter)
     {
-        logger.LogDebug("[WkHTMLtoPDF] Converter destroyed");
-
         WkHtmlBindings.wkhtmltopdf_destroy_converter(converter);
+        
+        logger.LogDebug("[WkHTMLtoPDF] Converter destroyed");
     }
 
     public unsafe Stream GetConversion(IntPtr converter)
