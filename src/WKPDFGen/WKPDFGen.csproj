@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>0.1.0-beta</PackageVersion>
+        <PackageVersion>0.2.0-beta</PackageVersion>
         <Description>C# wrapper for wkhtmltopdf library for cross-platform generating PDF files from HTML</Description>
         <RepositoryUrl>https://github.com/BigDaddy1337/WKPDFGen</RepositoryUrl>
         <PackageProjectUrl>https://github.com/BigDaddy1337/WKPDFGen</PackageProjectUrl>
