@@ -51,10 +51,8 @@ public partial class WkHtmlToPdfConverter
 
     private void ProcessingThreadWorker()
     {
-        while (true)
+        foreach (var (html, path, configuration, taskCompletionSource, token) in processingQueue.GetConsumingEnumerable())
         {
-            var (html, path, configuration, taskCompletionSource, token) = processingQueue.Take();
-
             if (processingQueue.Count > 0)
                 logger.LogInformation("[WkHTMLtoPDF] Started process item (path: {ProccesingItemPath}) from queue, current queue length {ProccesingThreadQueueLength}", path, processingQueue.Count);
 
@@ -71,6 +69,5 @@ public partial class WkHtmlToPdfConverter
                 taskCompletionSource.SetException(e);
             }
         }
-        // ReSharper disable once FunctionNeverReturns
     }
 }
