@@ -20,9 +20,11 @@ public void ConfigureServices(IServiceCollection services)
 {
     services.AddWkPdfGenerator(options =>
     {
-        options.LinuxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.so.0.12.6");
-        options.WindowsLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.dll");
-        options.OsxLibPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6", "libwkhtmltox.dylib");
+        var nativeLibsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "0.12.6");
+        
+        options.LinuxLibPath = Path.Combine(nativeLibsPath, "libwkhtmltox.so.0.12.6");
+        options.WindowsLibPath = Path.Combine(nativeLibsPath, "libwkhtmltox.dll");
+        options.OsxLibPath = Path.Combine(nativeLibsPath, "libwkhtmltox.0.12.6.dylib");
     });
 }
 ```
@@ -30,10 +32,19 @@ public void ConfigureServices(IServiceCollection services)
 ```cs
 // Create configuration once before using converter
 
-private readonly PDFConfiguration pdfConfig = new(
+private readonly WKPDFGenConfiguration pdfConfig = new(
     new PdfSettings
     {
+        DocumentTitle = "Example PDF",
+        ColorMode = ColorMode.Color,
+        Orientation = Orientation.Portrait,
+        PaperSize = PaperKind.A4,
+        Copies = 1,
         PagesCount = true,
+        LoadSettings = new LoadSettings
+        {
+            BlockLocalFileAccess = false
+        },
         HeaderSettings = new HeaderSettings
         {
             FontSize = 14,
@@ -45,13 +56,6 @@ private readonly PDFConfiguration pdfConfig = new(
             Line = false,
             Spacing = 2.0
         }
-    }, 
-    new GlobalPdfSettings
-    {
-        ColorMode = ColorMode.Color,
-        Orientation = Orientation.Portrait,
-        PaperSize = PaperKind.A4,
-        Copies = 1
     }
 );
 

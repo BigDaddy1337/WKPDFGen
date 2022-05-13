@@ -27,10 +27,22 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
     private readonly IWkHtmlWrapper wkHtmlWrapper;
     private readonly ILogger<WkHtmlToPdfConverter> logger;
 
+    private readonly VoidCallback phaseChangedCallback;
+    private readonly VoidCallback progressChangedCallback;
+    private readonly IntCallback finishedCallback;
+    private readonly StringCallback warningCallback;
+    private readonly StringCallback errorCallback;
+
     public WkHtmlToPdfConverter(IWkHtmlWrapper wkHtmlWrapper, ILogger<WkHtmlToPdfConverter> logger)
     {
         this.wkHtmlWrapper = wkHtmlWrapper;
         this.logger = logger;
+
+        phaseChangedCallback = OnPhaseChanged;
+        progressChangedCallback = OnProgressChanged;
+        finishedCallback = OnFinished;
+        warningCallback = OnWarning;
+        errorCallback = OnError;
     }
 
     public Task<Stream> CreateAsync(string html, WKPDFGenConfiguration? configuration = null, CancellationToken token = default)
@@ -70,11 +82,11 @@ public partial class WkHtmlToPdfConverter : IWkHtmlToPdfConverter
 
         var (converter, globalSettings, objectSettigns) = CreateConverter(html, path, configuration);
 
-        wkHtmlWrapper.SetPhaseChangedCallback(converter, OnPhaseChanged);
-        wkHtmlWrapper.SetProgressChangedCallback(converter, OnProgressChanged);
-        wkHtmlWrapper.SetFinishedCallback(converter, OnFinished);
-        wkHtmlWrapper.SetWarningCallback(converter, OnWarning);
-        wkHtmlWrapper.SetErrorCallback(converter, OnError);
+        wkHtmlWrapper.SetPhaseChangedCallback(converter, phaseChangedCallback);
+        wkHtmlWrapper.SetProgressChangedCallback(converter, progressChangedCallback);
+        wkHtmlWrapper.SetFinishedCallback(converter, finishedCallback);
+        wkHtmlWrapper.SetWarningCallback(converter, warningCallback);
+        wkHtmlWrapper.SetErrorCallback(converter, errorCallback);
 
         if (wkHtmlWrapper.Convert(converter) == false)
             throw WkHtmlToPdfException.UnknownExceptionWhileConverting;
