@@ -20,7 +20,7 @@ namespace AspNetCoreExample
                               .UseUrls("http://0.0.0.0:5000")
                               .ConfigureLogging(logging =>
                               {
-                                  logging.SetMinimumLevel(LogLevel.Debug);
+                                  logging.SetMinimumLevel(LogLevel.Trace);
                                   logging.AddSimpleConsole(c => c.ColorBehavior = LoggerColorBehavior.Enabled);
                               });
 

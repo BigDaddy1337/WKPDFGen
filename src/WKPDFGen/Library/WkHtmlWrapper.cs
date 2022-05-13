@@ -10,6 +10,8 @@ namespace WKPDFGen.Library;
 public interface IWkHtmlWrapper : IDisposable
 {
     void Init();
+
+    void DeInit();
         
     string? GetLibraryVersion();
         
@@ -87,6 +89,11 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 
             isLoaded = true;
         }
+    }
+    
+    public void DeInit()
+    {
+        WkHtmlBindings.wkhtmltopdf_deinit();
     }
 
     public string? GetLibraryVersion()
@@ -224,8 +231,8 @@ public sealed partial class WkHtmlWrapper : IWkHtmlWrapper
 
     public void Dispose()
     {
-        WkHtmlBindings.wkhtmltopdf_deinit();
-
+        DeInit();
+        
         FreeLibraryHandle();
     }
 }
